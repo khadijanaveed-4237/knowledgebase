@@ -1,0 +1,169 @@
+# Project Analysis — Pipeline Schema
+#
+# Describes the 8-stage analysis pipeline implemented by
+# .opencode/skills/project-analysis/scripts/analyze.py.
+#
+# Every stage produces items tagged with a plausibility value:
+#   - fact        : directly observed from real files / command output
+#   - assumption  : heuristic inference based on observed facts
+#   - insufficient: could not be verified (INSUFFICIENT EVIDENCE)
+#
+# NOTE:
+#   - Technology is identified ONLY from real manifest files that exist,
+#     never from prose/docs.
+#   - No item may be upgraded from assumption/insufficient to fact without
+#     new, real evidence.
+#   - The target project is always read-only; only the report file is written.
+
+skill: project-analysis
+version: "1.0"
+script: scripts/analyze.py
+run: |
+  python3 .opencode/skills/project-analysis/scripts/analyze.py <target-directory> \
+    [--output <dir>] [--json]
+
+evidence_tags:
+  - fact
+  - assumption
+  - insufficient
+
+stages:
+  - id: 1
+    name: Inspect files and structure
+    function: collect_structure
+    produces:
+      - file_count
+      - dir_count
+      - total_size_bytes
+      - top_level
+      - files_by_extension
+      - files
+    inputs: []
+    evidence: fact
+    notes: >
+      Walks the tree read-only, pruning ignored directories. Lists only what
+      exists on disk; no interpretation.
+
+  - id: 2
+    name: Identify project type
+    function: detect_project_type
+    produces:
+      - verdict          # "detected" | "INSUFFICIENT EVIDENCE"
+      - evidence         # manifest file paths found
+      - types            # matched technology labels
+      - primary          # heuristic primary language/ecosystem
+    inputs: []
+    evidence: fact
+    notes: >
+      Recursively scans for manifest files (package.json, pyproject.toml,
+      Cargo.toml, go.mod, etc.). Type is asserted ONLY from files present.
+
+  - id: 3
+    name: Understand architecture
+    function: understand_architecture
+    produces:
+      - language_breakdown
+      - source_file_count
+      - entry_point_candidates
+      - source_grouping
+    inputs:
+      - structure
+    evidence: fact
+    notes: >
+      Summarizes languages by extension, groups source by top directory, and
+      flags common entry-point filenames (main.py, index.js, server.ts, ...).
+
+  - id: 4
+    name: Find problems
+    function: find_problems
+    produces:
+      - title
+      - plausibility
+      - evidence
+      - context            # e.g. secret key + value-credibility strength
+    inputs:
+      - structure
+      - manifest_metadata
+    evidence: mixed        # fact for observed patterns; assumption for gaps
+    notes: >
+      Heuristic scan for missing README/LICENSE/.gitignore/tests, oversized
+      files, and source markers (TODO/FIXME/HACK, silent exception handlers).
+      Hardcoded-secret detection matches ANY secret-indicating key and attaches
+      a credibility strength (0/1/2) to the value; values that look like
+      placeholders are not reported. Secret findings are CANDIDATES requiring
+      manual review, never confirmations.
+
+  - id: 5
+    name: Find causes
+    function: find_causes
+    produces:
+      - cause
+      - plausibility
+      - evidence
+    inputs:
+      - problem
+    evidence: insufficient  # true cause not observable; generic cards tagged insufficient
+    notes: >
+      Generic cause cards for each problem type. Because the true cause is not
+      directly observable from this scan, they are tagged insufficient, not
+      presented as confident assumptions.
+
+  - id: 6
+    name: Evaluate impact
+    function: evaluate_impact
+    produces:
+      - severity           # high | medium | low
+      - plausibility
+    inputs:
+      - problem
+      - context            # e.g. secret value strength, marker type
+    evidence: assumption
+    notes: >
+      Conservative severity heuristic. Severity is an ESTIMATE, never measured.
+      Lone markers (FIXME/TODO/HACK) and silent exceptions default to medium,
+      not high. Only strong-credential secret values (signature match) reach
+      high. Assumption-based problems are capped at low.
+
+  - id: 7
+    name: Recommend solutions
+    function: recommend
+    produces:
+      - recommendation
+      - plausibility
+      - severity
+    inputs:
+      - problem
+      - impact
+    evidence: assumption
+    notes: >
+      Matches each problem to a suggested remediation.
+
+  - id: 8
+    name: Create analysis report
+    function: build_report + render_markdown
+    produces:
+      - ANALYSIS.md        # written to --output <dir> (default cwd)
+      - JSON (with --json) # printed to stdout, pure JSON
+    inputs:
+      - all_prior_stages
+    evidence: mixed
+    notes: >
+      Assembles the report with a legend for fact/assumption/insufficient.
+      The target project is never written to.
+
+report:
+  file: ANALYSIS.md
+  output: --output <dir>   # defaults to current working directory
+  json: --json             # stdout = pure JSON, human messages on stderr
+  sections:
+    - Target and pipeline
+    - Inspect files and structure
+    - Identify project type
+    - Understand architecture
+    - Findings (problem / cause / impact / recommendation)
+    - Legend (fact | assumption | insufficient)
+
+guarantees:
+  read_only_target: true
+  no_guess_fill: true   # insufficient evidence is reported as such, never invented
+  evidence_required_for_fact: true
