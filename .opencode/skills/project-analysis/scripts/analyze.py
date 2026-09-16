@@ -83,7 +83,7 @@ def _rec(r, cf, sev, bo, pl="assumption"):
 def collect_structure(root):
     fc = dc = ts = 0; files = []; by = {}; tl = []; tree = {}
     for dp, dn, fn in os.walk(root):
-        dn[:] = [d for d in dn if d not in IGNORED_DIRS]
+        dn[:] = sorted(d for d in dn if d not in IGNORED_DIRS)
         rel = os.path.relpath(dp, root)
         if rel == ".": tl = sorted(dn + fn)
         tree[rel] = sorted(dn + fn)

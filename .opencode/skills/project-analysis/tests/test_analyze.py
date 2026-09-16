@@ -49,6 +49,11 @@ class TestStructureDetection(unittest.TestCase):
         self.assertIn("app.py", st["files"])
         self.assertIn("pyproject.toml", st["files"])
 
+    def test_deterministic_order(self):
+        st = analyze.collect_structure(fixture("mixed-language"))
+        self.assertEqual(st["files"], sorted(st["files"]))
+        self.assertEqual(list(st["directory_tree"]), sorted(st["directory_tree"]))
+
     def test_no_manifest_structure(self):
         st = analyze.collect_structure(fixture("no-manifest"))
         self.assertEqual(st["file_count"], 1)

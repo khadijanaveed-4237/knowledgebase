@@ -226,4 +226,5 @@ guarantees:
   verification_per_finding: true
   verification_is_evidence_first: true  # verified from evidence/plausibility/confidence, not from explanation layer
   conservative_causes: true     # causes are only "evidence-supported" when directly observable; otherwise "possible" or "unknown"
+  deterministic_ordering: true  # directory traversal and all report lists are sorted; identical input -> identical output on every system
   json_source_of_truth: true    # JSON and Markdown must not conflict
