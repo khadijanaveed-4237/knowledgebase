@@ -42,6 +42,8 @@ The analyzer implements an 8-stage pipeline that follows an evidence-first order
 
 The key ordering is: **facts first → evidence attached → verification computed → human-readable explanation produced last**.
 
+The analyzer is fully deterministic: directory traversal and every report list are sorted, so the same project produces byte-identical JSON and Markdown on every system. The analyzer never makes up evidence and never presents a guess as a fact.
+
 ## Strict Rules (MANDATORY)
 
 ### Evidence Rules
