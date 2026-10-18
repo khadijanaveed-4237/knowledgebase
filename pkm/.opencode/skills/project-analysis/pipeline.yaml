@@ -3,10 +3,10 @@
 # Describes the 8-stage analysis pipeline implemented by
 # .opencode/skills/project-analysis/scripts/analyze.py.
 #
-# Every stage produces items tagged with a plausibility value:
-#   - fact        : directly observed from real files / command output
-#   - assumption  : heuristic inference based on observed facts
-#   - insufficient: could not be verified (INSUFFICIENT EVIDENCE)
+# Every stage produces items with:
+#   plausibility  : fact | assumption | insufficient
+#   confidence    : high | medium | low
+#   verification  : verified | partially_verified | unverified
 #
 # NOTE:
 #   - Technology is identified ONLY from real manifest files that exist,
@@ -14,9 +14,11 @@
 #   - No item may be upgraded from assumption/insufficient to fact without
 #     new, real evidence.
 #   - The target project is always read-only; only the report file is written.
+#   - The JSON output is the machine-readable source of truth.
+#   - Markdown is a human-readable rendering of the same data.
 
 skill: project-analysis
-version: "1.0"
+version: "2.0"
 script: scripts/analyze.py
 run: |
   python3 .opencode/skills/project-analysis/scripts/analyze.py <target-directory> \
@@ -26,6 +28,16 @@ evidence_tags:
   - fact
   - assumption
   - insufficient
+
+confidence_levels:
+  - high       # directly verified from multiple observations
+  - medium     # supported by observations but not fully confirmed
+  - low        # weak heuristic, single observation or inference
+
+verification_statuses:
+  - verified          # evidence directly supports the claim
+  - partially_verified  # some evidence, gaps remain
+  - unverified        # insufficient evidence
 
 stages:
   - id: 1
@@ -38,11 +50,13 @@ stages:
       - top_level
       - files_by_extension
       - files
+      - directory_tree
     inputs: []
     evidence: fact
+    confidence: high
     notes: >
       Walks the tree read-only, pruning ignored directories. Lists only what
-      exists on disk; no interpretation.
+      exists on disk; no interpretation. Includes directory tree for structure analysis.
 
   - id: 2
     name: Identify project type
@@ -50,13 +64,18 @@ stages:
     produces:
       - verdict          # "detected" | "INSUFFICIENT EVIDENCE"
       - evidence         # manifest file paths found
+      - ecosystems       # list of detected ecosystems with evidence files
       - types            # matched technology labels
       - primary          # heuristic primary language/ecosystem
+      - primary_confidence  # confidence in primary choice
+      - multiple_ecosystems # whether multiple ecosystems detected
     inputs: []
     evidence: fact
     notes: >
       Recursively scans for manifest files (package.json, pyproject.toml,
       Cargo.toml, go.mod, etc.). Type is asserted ONLY from files present.
+      Reports ecosystems with their evidence files. Primary is heuristic
+      when multiple ecosystems exist.
 
   - id: 3
     name: Understand architecture
@@ -66,77 +85,105 @@ stages:
       - source_file_count
       - entry_point_candidates
       - source_grouping
+      - likely_directories     # heuristic directory role detection
+      - config_files
+      - test_files
+      - database_files
+      - manifest_files
     inputs:
       - structure
     evidence: fact
+    confidence: high
     notes: >
       Summarizes languages by extension, groups source by top directory, and
-      flags common entry-point filenames (main.py, index.js, server.ts, ...).
+      flags common entry-point filenames. Identifies likely directory roles
+      (api, frontend, backend, model, util, config, test, database) from
+      directory names. These are heuristic and labeled as such.
 
   - id: 4
     name: Find problems
     function: find_problems
     produces:
       - title
+      - category          # e.g. missing_documentation, large_file, code_marker, possible_secret
       - plausibility
-      - evidence
-      - context            # e.g. secret key + value-credibility strength
+      - confidence
+      - evidence          # list of structured evidence items
+      - context           # safe metadata (no secret values exposed)
     inputs:
       - structure
       - manifest_metadata
-    evidence: mixed        # fact for observed patterns; assumption for gaps
+    evidence: mixed
     notes: >
       Heuristic scan for missing README/LICENSE/.gitignore/tests, oversized
       files, and source markers (TODO/FIXME/HACK, silent exception handlers).
-      Hardcoded-secret detection matches ANY secret-indicating key and attaches
-      a credibility strength (0/1/2) to the value; values that look like
-      placeholders are not reported. Secret findings are CANDIDATES requiring
-      manual review, never confirmations.
+      Large files gather additional evidence: function/class counts, import
+      counts, multiple responsibilities. Hardcoded-secret detection classifies
+      matches as placeholder/possible_credential/strong_credential_signature.
+      Secret values are NEVER printed. Findings carry structured evidence items.
 
   - id: 5
-    name: Find causes
+    name: Find causes (conservative)
     function: find_causes
     produces:
-      - cause
-      - plausibility
-      - evidence
+      - verified_cause      # directly observable only
+      - possible_causes     # plausible but not established by static inspection
+      - plausibility        # fact | assumption | insufficient
+      - confidence
+      - verification
     inputs:
       - problem
-    evidence: insufficient  # true cause not observable; generic cards tagged insufficient
+    evidence: mixed
     notes: >
-      Generic cause cards for each problem type. Because the true cause is not
-      directly observable from this scan, they are tagged insufficient, not
-      presented as confident assumptions.
+      Conservative cause analysis. Verified causes are limited to directly
+      observable facts (e.g. "file not found in the listing"). Possible causes
+      are explicitly labeled as unestablished. Historical or intentional
+      explanations (e.g. "responsibilities grew over time") are NOT stated.
+      If the cause cannot be determined statically, it is reported as
+      insufficient or unknown.
 
   - id: 6
     name: Evaluate impact
     function: evaluate_impact
     produces:
       - severity           # high | medium | low
+      - severity_confidence
+      - reasoning          # why this severity was assigned
       - plausibility
+      - confidence
+      - verification
     inputs:
       - problem
-      - context            # e.g. secret value strength, marker type
+      - context
     evidence: assumption
     notes: >
-      Conservative severity heuristic. Severity is an ESTIMATE, never measured.
-      Lone markers (FIXME/TODO/HACK) and silent exceptions default to medium,
-      not high. Only strong-credential secret values (signature match) reach
-      high. Assumption-based problems are capped at low.
+      Evidence-first severity heuristic based on category, evidence strength,
+      and context. Severity is an ESTIMATE, never measured. Reasoning explicitly
+      states what static inspection cannot determine. Large files with multiple
+      responsibilities may reach medium. Strong credential signatures may
+      reach high. Code markers default to low. Assumption-based findings
+      are capped at medium.
 
   - id: 7
     name: Recommend solutions
     function: recommend
     produces:
       - recommendation
-      - plausibility
+      - confidence
+      - verification
       - severity
+      - based_on           # explains what the recommendation depends on
     inputs:
       - problem
       - impact
+      - causes
     evidence: assumption
     notes: >
-      Matches each problem to a suggested remediation.
+      Evidence-based recommendations connected to specific findings. Each
+      recommendation states what it depends on (based_on) and what the next
+      human verification step should be. Recommendations for insufficient
+      evidence cases suggest verification rather than assuming a solution is
+      certain.
 
   - id: 8
     name: Create analysis report
@@ -144,12 +191,18 @@ stages:
     produces:
       - ANALYSIS.md        # written to --output <dir> (default cwd)
       - JSON (with --json) # printed to stdout, pure JSON
+      - summary            # total findings, severity counts, verification counts
     inputs:
       - all_prior_stages
     evidence: mixed
     notes: >
-      Assembles the report with a legend for fact/assumption/insufficient.
-      The target project is never written to.
+      Assembles the report. Per-finding order is: facts and evidence (stages 1-4),
+      verification computed from evidence first, then human-readable explanation
+      (causes, impact, recommendations) produced last. This ensures explanations
+      never influence verification. A legend for plausibility, confidence, and
+      verification is included. JSON is the machine-readable source of truth.
+      Markdown is a rendering of the same data. The target project is never
+      written to.
 
 report:
   file: ANALYSIS.md
@@ -160,10 +213,18 @@ report:
     - Inspect files and structure
     - Identify project type
     - Understand architecture
-    - Findings (problem / cause / impact / recommendation)
-    - Legend (fact | assumption | insufficient)
+    - Findings (problem / causes / verification / impact / recommendations)
+    - Code summary (project type, languages, technologies, symbols, data flow, dependencies, configuration, testing)
+    - Legend (plausibility | confidence | verification)
 
 guarantees:
   read_only_target: true
-  no_guess_fill: true   # insufficient evidence is reported as such, never invented
+  no_guess_fill: true           # insufficient evidence is reported as such, never invented
   evidence_required_for_fact: true
+  no_secret_values_exposed: true
+  structured_evidence: true     # findings contain typed evidence items (including line numbers)
+  verification_per_finding: true
+  verification_is_evidence_first: true  # verified from evidence/plausibility/confidence, not from explanation layer
+  conservative_causes: true     # causes are only "evidence-supported" when directly observable; otherwise "possible" or "unknown"
+  deterministic_ordering: true  # directory traversal and all report lists are sorted; identical input -> identical output on every system
+  json_source_of_truth: true    # JSON and Markdown must not conflict
