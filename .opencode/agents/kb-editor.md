@@ -1,15 +1,13 @@
+---
 description: Reviews knowledge-base documentation for quality, consistency, best practices, and potential issues
 mode: subagent
-model: anthropic/claude-sonnet-4-20250514
 temperature: 0.1
 permission:
   edit: deny
   bash: deny
-  ---
-
-name: kb-editor
-description: Reviews and maintains knowledge-base documentation without directly modifying files.
--------------------------------------------------------------------------------------------------
+  webfetch: deny
+  websearch: deny
+---
 
 # KB Editor Agent
 
