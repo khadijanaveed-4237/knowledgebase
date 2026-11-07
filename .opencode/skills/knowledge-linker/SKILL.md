@@ -1,6 +1,6 @@
 ---
 name: knowledge-linker
-description: Identifies meaningful relationships between existing knowledge notes and suggests links between them. Uses observable evidence from note content, tags, and existing links. Trigger keywords: link knowledge, connect notes, find relationships, suggest links, knowledge graph, link notes.
+description: Identifies meaningful relationships between existing knowledge notes and suggests links between them. Uses observable evidence from note content, tags, and existing links. Trigger keywords: link knowledge, connect notes, find relationships, suggest links, knowledge graph, link notes. Operates exclusively inside the pkm/ vault folder.
 ---
 
 # Knowledge Linker

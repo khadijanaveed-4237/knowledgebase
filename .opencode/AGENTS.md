@@ -65,6 +65,17 @@ This file documents the available skills and when to invoke each one.
 | "What notes relate to X?" | knowledge-linker |
 | "Capture this idea" | pkm |
 | "Create a knowledge note" | pkm |
+| "Analyze this project's code" | project-analysis |
+| "Analyze this project's architecture" | architecture-analysis |
+
+## Disambiguation Rules
+
+- **Specific triggers take priority**: If a user's question matches a specific trigger keyword (e.g., "find bugs," "review repo," "analyze architecture," "show me data flow"), use that skill exclusively.
+- **Project-wide codebase analysis** → project-analysis (keywords: analyze project, codebase review, find bugs, review repo, understand this project)
+- **Software architecture analysis** → architecture-analysis (keywords: software architecture, project architecture, system architecture, component relationships, internal dependencies, data flow, architectural patterns, separation of responsibilities)
+- **PKM note management** → pkm (keywords: capture idea, save this note, create knowledge note, set up project log, research X, organize the vault)
+- **Knowledge note relationships** → knowledge-linker (keywords: find related notes, suggest links, what notes relate to X, build knowledge graph)
+- **Clarification needed**: When a question could match multiple skills (e.g., "analyze this project"), ask the user whether they mean code-level issues (project-analysis) or structural architecture (architecture-analysis), or PKM organization (pkm). Route based on the user's clarified intent.
 
 ## Key Distinctions
 

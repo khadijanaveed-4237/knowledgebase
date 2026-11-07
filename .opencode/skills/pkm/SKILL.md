@@ -1,6 +1,6 @@
 ---
 name: pkm
-description: Manages the PKM knowledge base — captures ideas into pkm/Ideas, creates knowledge notes in pkm/Knowledge, tracks projects in pkm/Projects, and logs research in pkm/Research, using the templates in pkm/Templates. Use when the user wants to capture an idea, write or save a note, add knowledge, start or update a project, begin or record research, or organize the vault. Trigger keywords: idea, note, knowledge, capture, save this, research, project, PKM, vault, template. Use ONLY for notes inside the pkm/ folder, not for general tasks.
+description: Manages the PKM knowledge base — captures ideas into pkm/Ideas, creates knowledge notes in pkm/Knowledge, tracks projects in pkm/Projects, and logs research in pkm/Research, using the templates in pkm/Templates. Use when the user wants to capture an idea, write or save a note, add knowledge, start or update a project, begin or record research, or organize the vault. Trigger keywords: idea, note, capture, save this, research, PKM, vault, template. Use ONLY for notes inside the pkm/ folder, not for general tasks. Do NOT invoke for project-wide codebase analysis — use project-analysis for that.
 ---
 
 # PKM Skill

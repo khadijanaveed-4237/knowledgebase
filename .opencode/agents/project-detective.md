@@ -54,4 +54,6 @@ Organize the report as:
 6. **Data flow** — the path data takes through the system.
 7. **Open questions** — what remains undetermined.
 
+**Boundary with project-analysis skill**: The project-detective agent provides general investigative analysis of project identity, structure, and organization. The `project-analysis` skill produces a deterministic 8-stage evidence-based report with findings, severity scores, and verification status. Use project-detective for general project investigation; use project-analysis for structured analysis with severity classification and recommendations.
+
 Report only; make no changes to the project.

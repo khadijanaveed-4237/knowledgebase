@@ -27,8 +27,8 @@ Review every existing agent and every existing skill for:
 
 Review both of these folders recursively:
 
-- `.opencode/agents/`
-- `.opencode/skills/`
+- `pkm/.opencode/agents/`
+- `pkm/.opencode/skills/`
 
 Inspect every agent file and every skill directory, including each `SKILL.md` and any referenced supporting file that is needed to verify a claim. Do not review only a sample. If a folder is empty or missing, say so explicitly.
 

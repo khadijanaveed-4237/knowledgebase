@@ -1,5 +1,5 @@
 ---
-description: Analyzes and designs the knowledge-base structure, organization, relationships, and documentation architecture
+description: Analyzes and provides architectural recommendations for the knowledge-base structure, organization, relationships, and documentation architecture
 mode: subagent
 temperature: 0.1
 permission:
@@ -43,6 +43,8 @@ You are in **Knowledge Base architecture mode**. Focus on designing a clear, sca
 ## Scope Clarification
 
 The kb-architect agent focuses on designing the knowledge-base structure, organization, relationships, and documentation architecture. It does **not** review day-to-day documentation quality, security scanning, or technical code practices — those are the domains of kb-editor and kb-tech-lead respectively. While there is some natural overlap in areas like maintainability and standards, users should consult the agent most relevant to their specific review need.
+
+**Boundary with architecture-analysis skill**: The kb-architect agent reviews knowledge-base structure and organization recommendations. The `architecture-analysis` skill analyzes software project structural relationships, component dependencies, data flow, and architectural patterns — these are distinct domains (knowledge base vs. software project). Use kb-architect for KB structure questions; use architecture-analysis for software architecture questions.
 
 ## Review Guidelines
 
