@@ -18,6 +18,8 @@ Keep the vault consistent and maintainable:
 - **Templates** — canonical note skeletons in `pkm/Templates/`. Never invent a
   new structure; always derive from the matching template.
 
+> **Path Note**: All `pkm/` paths in this skill refer to the PKM vault root directory, not the `.opencode/` project root. For example, `pkm/Knowledge/` means a `Knowledge` directory inside the PKM vault, not inside the project being reviewed.
+
 ## When to invoke
 
 Invoke when the request involves creating, updating, or organizing PKM notes:
@@ -85,7 +87,7 @@ Append an entry to `Changelog` for every change:
 
 For architecture or quality review, delegate to the `kb-architect`,
 `kb-editor`, or `kb-tech-lead` subagents (they review only and never edit).
-The skill itself creates and edits notes directly.
+This skill manages notes directly as part of its PKM workflow.
 
 ## Output
 

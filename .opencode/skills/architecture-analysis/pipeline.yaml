@@ -1,0 +1,144 @@
+# Architecture Analysis — Pipeline Schema
+#
+# Describes the analysis flow implemented by
+# .opencode/skills/architecture-analysis/SKILL.md.
+#
+# Every item is evidence-based and read-only.
+#
+# NOTE:
+#   - Architecture analysis is based only on project files that can be inspected.
+#   - No item may be upgraded from assumption/insufficient to fact without
+#     new, real evidence.
+#   - The target project is always read-only; only the report file is written.
+
+skill: architecture-analysis
+version: "1.0"
+script: SKILL.md
+
+evidence_tags:
+  - fact
+  - assumption
+  - insufficient
+
+confidence_levels:
+  - high       # directly verified from multiple observations
+  - medium     # supported by observations but not fully confirmed
+  - low        # weak heuristic, single observation or inference
+
+verification_statuses:
+  - verified          # evidence directly supports the claim
+  - partially_verified  # some evidence, gaps remain
+  - unverified        # insufficient evidence
+
+stages:
+  - id: 1
+    name: Inspect the project
+    function: inspect
+    produces:
+      - project_overbrief
+    inputs: []
+    evidence: fact
+    confidence: high
+    notes: >
+      Look at the folder and file structure. No interpretation. Reports what
+      exists on disk.
+
+  - id: 2
+    name: Identify main components
+    function: identify_components
+    produces:
+      - components
+    inputs: []
+    evidence: fact
+    confidence: high
+    notes: >
+      Find important modules, services, classes, and other project parts based
+      on their actual code.
+
+  - id: 3
+    name: Understand responsibilities
+    function: understand_responsibilities
+    produces:
+      - responsibilities
+    inputs: []
+    evidence: fact
+    confidence: high
+    notes: >
+      Determine what each major component does based on its actual code.
+
+  - id: 4
+    name: Find connections
+    function: find_connections
+    produces:
+      - connections
+    inputs: []
+    evidence: fact
+    confidence: high
+    notes: >
+      Check imports, function calls, references, APIs, and other observable
+      connections between components.
+
+  - id: 5
+    name: Find entry points
+    function: find_entry_points
+    produces:
+      - entry_points
+    inputs: []
+    evidence: fact
+    confidence: high
+    notes: >
+      Identify the main places where execution begins.
+
+  - id: 6
+    name: Follow data flow
+    function: follow_data_flow
+    produces:
+      - data_flow
+    inputs: []
+    evidence: fact
+    confidence: high
+    notes: >
+      Explain how data moves between important components.
+
+  - id: 7
+    name: Identify architecture pattern
+    function: identify_pattern
+    produces:
+      - pattern
+    inputs: []
+    evidence: assumption
+    confidence: medium
+    notes: >
+      Identify patterns such as layered, MVC, modular, or similar patterns only
+      when there is enough evidence. Do not invent relationships.
+
+  - id: 8
+    name: Create the explanation
+    function: create_explanation
+    produces:
+      - explanation
+    inputs: []
+    evidence: mixed
+    notes: >
+      Present the architecture in a simple and organized way. Clearly identify
+      uncertain areas and information that could not be determined.
+
+report:
+  file: architecture-analysis.md
+  output: --output <dir>   # defaults to current working directory
+  sections:
+    - Project Overview
+    - Project Structure
+    - Main Components
+    - Component Relationships
+    - Entry Points
+    - Data Flow
+    - Architecture Pattern
+    - Responsibility Division
+    - Evidence and Limitations
+
+guarantees:
+  read_only_target: true
+  evidence_required_for_fact: true
+  conservative_causes: true
+  deterministic_ordering: true

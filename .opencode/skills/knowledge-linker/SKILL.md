@@ -19,6 +19,8 @@ Identify meaningful relationships between existing knowledge notes in the PKM va
 
 ## What It Does
 
+> **Path Note**: All `pkm/` paths in this skill refer to the PKM vault root directory, not the `.opencode/` project root. For example, `pkm/Knowledge/` means a `Knowledge` directory inside the PKM vault, not inside the project being reviewed.
+
 - Reads knowledge notes from `pkm/Knowledge/`
 - Identifies candidate relationships using observable evidence
 - Suggests meaningful links with confidence and evidence
